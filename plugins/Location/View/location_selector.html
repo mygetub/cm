@@ -1,0 +1,133 @@
+<div  id="{$config['outer_id']}" class="{$config['outer_class']}" style="{$config['outer_style']}">
+	<select style="font-size: 12px;" class="{$config['select_class']} {$config['select_name']} {$config['select_name']}_province" name="{$config['select_name']}[0]">
+		<!-- <option>请选择省份</option> -->
+		<?php 
+		foreach($topList as $key=>$val){
+			if(!empty($data) && $data[0] == $val['id']){
+				$selected = "selected";
+			}else{
+				$selected = "";
+			}
+			echo '<option value="'.$val['id'].'" '.$selected.'>'.$val['name'].'</option>';
+		}
+		?>
+	</select>
+	{$config['select_break']}
+	
+	<select  style="font-size: 12px;" class="{$config['select_class']} {$config['select_name']} {$config['select_name']}_city" name="{$config['select_name']}[1]">
+		<option>请选择城市</option>
+	</select>
+	{$config['select_break']}
+	
+	<select  style="font-size: 12px;" class="{$config['select_class']} {$config['select_name']} {$config['select_name']}_district" name="{$config['select_name']}[2]">
+		<option>请选择辖区</option>
+	</select>
+	
+	<span class="{$config['select_class']}_error"></span>
+</div>
+
+{//一定要先导入jq库，不然运行不了}
+<!-- <script src="__PLUGINROOT__/js/jquery.js"></script> -->
+<script src="http://cdn.bootcss.com/jquery/2.1.2/jquery.min.js"></script>
+<script type="text/javascript">
+<?php
+if(is_array($data)){
+	echo 'var '.$config['select_name'].'_nowProvince 	=  '.($data[0]?$data[0]:0).";\r\n";
+	echo 'var '.$config['select_name'].'_nowCity 		=  '.($data[1]?$data[1]:0).";\r\n";
+	echo 'var '.$config['select_name'].'_nowDistrict 	=  '.($data[2]?$data[2]:0).";\r\n";
+}else{
+	echo 'var '.$config['select_name'].'_nowProvince 	=  0;'."\r\n";
+	echo 'var '.$config['select_name'].'_nowCity 		=  0;'."\r\n";
+	echo 'var '.$config['select_name'].'_nowDistrict 	=  0;'."\r\n";
+}
+?>
+// 初始化
+$(document).ready(function () {
+	var {$config['select_name']}_nowLevelName = "{$config['select_name']}_province";
+	var {$config['select_name']}_subLevelName = ["{$config['select_name']}_city","{$config['select_name']}_district"];
+	var {$config['select_name']}_nowLevelId = $("."+{$config['select_name']}_nowLevelName).val();
+	{$config['select_name']}_GetSubArea({$config['select_name']}_nowLevelId,{$config['select_name']}_subLevelName);
+	/*ajaxPostForm();*/
+});
+
+/* {$config['select_name']}_province {$config['select_name']}_city {$config['select_name']}_district */
+$(".{$config['select_name']}").on('change',function(){
+	{$config['select_name']}_SetSubArea(this);
+});
+
+var {$config['select_name']}_SetSubArea = function (e){
+	//var {$config['select_name']}_nowLevelName = "";
+	//var {$config['select_name']}_subLevelName = "";
+	if($(e).hasClass("{$config['select_name']}_province")){
+		{$config['select_name']}_nowLevelName = "{$config['select_name']}_province";
+		{$config['select_name']}_subLevelName = ["{$config['select_name']}_city","{$config['select_name']}_district"];
+	}else if($(e).hasClass("{$config['select_name']}_city")){
+		{$config['select_name']}_nowLevelName = "{$config['select_name']}_city";
+		{$config['select_name']}_subLevelName = ["{$config['select_name']}_district"];
+	}else if($(e).hasClass("{$config['select_name']}_district")){
+		{$config['select_name']}_nowLevelName = "{$config['select_name']}_district";
+		{$config['select_name']}_subLevelName = [];
+	}
+	{$config['select_name']}_nowLevelId = $(e).val();
+	{$config['select_name']}_GetSubArea({$config['select_name']}_nowLevelId,{$config['select_name']}_subLevelName);
+}
+
+var {$config['select_name']}_GetSubArea = function (pUpid, {$config['select_name']}_subLevelName){
+	$.ajax({
+		url: "{:sp_plugin_url('Location://Index/get_sub_area')}",
+		type: "POST",
+		data: {"upid":pUpid},
+		beforeSend: function(){
+			if($({$config['select_name']}_subLevelName).length>0){
+				$({$config['select_name']}_subLevelName).each(function(i,val){
+					//console.log(i);
+					$("."+val).html('<option>正在获取列表</option>');
+				});
+			}
+			return true;
+		},
+		success: function(result){
+			if(result === null || result.status === false){
+				if($({$config['select_name']}_subLevelName).length>0){
+					$({$config['select_name']}_subLevelName).each(function(i,val){
+						$("."+val).html('<option>获取列表失败</option>');
+					});
+				}
+			}else{
+				if($({$config['select_name']}_subLevelName).length>0){
+					$({$config['select_name']}_subLevelName).each(function(i,val){
+						if(i==0){
+							{$config['select_name']}_setOption(result.data, val);
+						}else{
+							$("."+val).html('<option>请选择</option>');
+						}
+					});
+				}
+			}
+		}
+	});
+}
+
+function {$config['select_name']}_setOption(data, subSelectDiv){
+	var buildingOption, nowSelected, selected;
+	if(subSelectDiv=="{$config['select_name']}_city"){
+		nowSelected = {$config['select_name']}_nowCity;
+	}else if(subSelectDiv=="{$config['select_name']}_district"){
+		nowSelected = {$config['select_name']}_nowDistrict;
+	}else{
+		nowSelected = 0;
+	}
+	$.each(data,function(n,val) {
+		if(nowSelected == val['id']){
+			selected = "selected";
+		}else{
+			selected = "";
+		}
+		buildingOption +='<option value="'+val['id']+'" '+selected+'>'+val['name']+'</option>';
+	});
+	$("."+subSelectDiv).html(buildingOption);
+	{$config['select_name']}_SetSubArea($("."+subSelectDiv));
+}
+
+
+</script>

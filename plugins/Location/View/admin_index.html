@@ -1,0 +1,186 @@
+<admintpl file="header"/>
+<body>
+<div class="wrap js-check-wrap">
+	<ul class="nav nav-tabs">
+		<li class="active"><a>国内地区多级地址联动选择插件后台</a></li>
+	</ul>
+	<div class="">
+		
+		<div id="{$config['outer_id']}" class="{$config['outer_class']}" style="{$config['outer_style']}">
+			<select class="{$config['select_class']} {$config['select_name']} {$config['select_name']}_province" name="{$config['select_name']}[0]">
+				<!-- <option>请选择省份</option> -->
+				<?php 
+				foreach($topList as $key=>$val){
+					if(!empty($data) && $data[0] == $val['id']){
+						$selected = "selected";
+					}else{
+						$selected = "";
+					}
+					echo '<option value="'.$val['id'].'" '.$selected.'>'.$val['name'].'</option>';
+				}
+				?>
+			</select>
+			{$config['select_break']}
+			
+			<select class="{$config['select_class']} {$config['select_name']} {$config['select_name']}_city" name="{$config['select_name']}[1]">
+				<option>请选择城市</option>
+			</select>
+			{$config['select_break']}
+			
+			<select class="{$config['select_class']} {$config['select_name']} {$config['select_name']}_district" name="{$config['select_name']}[2]">
+				<option>请选择辖区</option>
+			</select>
+			
+			<span class="{$config['select_class']}_error"></span>
+		</div>
+		
+		<div class="well">
+			<h2>国内地区多级地址联动选择插件后台</h2>
+			<p>
+				<b>当前登录管理员id:</b>{$adminid|default='管理员未登录'}
+			</p>
+			<p>
+				<b>插件根目录:</b>__PLUGINROOT__
+			</p>
+			<p>
+				<b>插件模板根目录:</b>__PLUGINTMPL__
+			</p>
+			<p>
+				<b>国内地区多级地址联动选择插件</b><br />
+				<b>安装方法：</b><br />
+				&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;使用前请先导入数据表，并修改成系统对应的前缀。<br />
+				&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;如果数据表名有变动，请修改 /Model/PluginLocationModel.class.php中的 $tableName参数。<br />
+				<br />
+				<b>使用方法：</b><br />
+				&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;在控制器或者模板 hooks 中添加钩子<br />
+				&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;在需要使用的地方调用钩子(注意去掉花括号里面的空格)：<br />
+				&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{ :hook('location_selector',array(19,289,3040))}<br />
+				<br />
+				<b>参数说明：</b><br />
+				&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;除了在配置中定义select的表单名name属性外，可以在调用钩子的时候定义，更加灵活。<br />
+				&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;参数可以传入的方式有三种：<br />
+				&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;方式1：仅仅传入数字，则定义省级默认值，如果该数字超出省级范围，则默认显示ID=1的省份。<br />
+				&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;方式2：传入1维数组，并且全部为数字，如上示范格式，则为三个选择框的默认地址id，区域从大到小，如果下级单位ID不对应，则显示下级单位中的第一个为默认值。<br />
+				&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;方式3：传入格式：[['attr'=>['select_name'=>'custom_name']],['data'=>[19,289,3040]]]<br />
+				&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;　　　　则表示第一个为config中的字段的属性，除了select_name之外，还可以定义其他的一些参数，具体可以看config文件，第二个参数则为传入的默认值，格式跟方式2一样。<br />
+				&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;　　　　除此之外，还可以用这个格式，['attr'=>['select_name'=>'custom_name']],19,289,3040]，请自由发挥。<br />
+				&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;　　　　注*：以上的数组定义格式为PHP5.3以上的新特性，旧版本请用原来的array的方法定义。<br />
+				<br />
+				&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;前端展示链接：
+					<a target="_blank" href="{:sp_plugin_url('Location://Index/index')}">国内地区多级地址联动选择插件</a><br />
+				&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;作者主页链接： <a target="_blank" href="http://www.ccbox.net">CCBox</a>
+			</p>
+		</div>
+
+	</div>
+</div>
+<script src="__PUBLIC__/js/common.js?"></script>
+
+
+{//一定要先导入jq库，不然运行不了}
+<!-- <script src="__PLUGINROOT__/js/jquery.js"></script> -->
+<script src="http://lib.sinaapp.com/js/jquery/1.8.3/jquery.min.js"></script>
+<script type="text/javascript">
+<?php
+if(is_array($data)){
+	echo 'var '.$config['select_name'].'_nowProvince 	=  '.($data[0]?$data[0]:0).";\r\n";
+	echo 'var '.$config['select_name'].'_nowCity 		=  '.($data[1]?$data[1]:0).";\r\n";
+	echo 'var '.$config['select_name'].'_nowDistrict 	=  '.($data[2]?$data[2]:0).";\r\n";
+}else{
+	echo 'var '.$config['select_name'].'_nowProvince 	=  0;'."\r\n";
+	echo 'var '.$config['select_name'].'_nowCity 		=  0;'."\r\n";
+	echo 'var '.$config['select_name'].'_nowDistrict 	=  0;'."\r\n";
+}
+?>
+// 初始化
+$(document).ready(function () {
+	var {$config['select_name']}_nowLevelName = "{$config['select_name']}_province";
+	var {$config['select_name']}_subLevelName = ["{$config['select_name']}_city","{$config['select_name']}_district"];
+	var {$config['select_name']}_nowLevelId = $("."+{$config['select_name']}_nowLevelName).val();
+	{$config['select_name']}_GetSubArea({$config['select_name']}_nowLevelId,{$config['select_name']}_subLevelName);
+	/*ajaxPostForm();*/
+});
+
+/* {$config['select_name']}_province {$config['select_name']}_city {$config['select_name']}_district */
+$(".{$config['select_name']}").on('change',function(){
+	{$config['select_name']}_SetSubArea(this);
+});
+
+var {$config['select_name']}_SetSubArea = function (e){
+	//var {$config['select_name']}_nowLevelName = "";
+	//var {$config['select_name']}_subLevelName = "";
+	if($(e).hasClass("{$config['select_name']}_province")){
+		{$config['select_name']}_nowLevelName = "{$config['select_name']}_province";
+		{$config['select_name']}_subLevelName = ["{$config['select_name']}_city","{$config['select_name']}_district"];
+	}else if($(e).hasClass("{$config['select_name']}_city")){
+		{$config['select_name']}_nowLevelName = "{$config['select_name']}_city";
+		{$config['select_name']}_subLevelName = ["{$config['select_name']}_district"];
+	}else if($(e).hasClass("{$config['select_name']}_district")){
+		{$config['select_name']}_nowLevelName = "{$config['select_name']}_district";
+		{$config['select_name']}_subLevelName = [];
+	}
+	{$config['select_name']}_nowLevelId = $(e).val();
+	{$config['select_name']}_GetSubArea({$config['select_name']}_nowLevelId,{$config['select_name']}_subLevelName);
+}
+
+var {$config['select_name']}_GetSubArea = function (pUpid, {$config['select_name']}_subLevelName){
+	$.ajax({
+		url: "{:sp_plugin_url('Location://Index/get_sub_area')}",
+		type: "POST",
+		data: {"upid":pUpid},
+		beforeSend: function(){
+			if($({$config['select_name']}_subLevelName).length>0){
+				$({$config['select_name']}_subLevelName).each(function(i,val){
+					//console.log(i);
+					$("."+val).html('<option>正在获取列表</option>');
+				});
+			}
+			return true;
+		},
+		success: function(result){
+			if(result === null || result.status === false){
+				if($({$config['select_name']}_subLevelName).length>0){
+					$({$config['select_name']}_subLevelName).each(function(i,val){
+						$("."+val).html('<option>获取列表失败</option>');
+					});
+				}
+			}else{
+				if($({$config['select_name']}_subLevelName).length>0){
+					$({$config['select_name']}_subLevelName).each(function(i,val){
+						if(i==0){
+							{$config['select_name']}_setOption(result.data, val);
+						}else{
+							$("."+val).html('<option>请选择</option>');
+						}
+					});
+				}
+			}
+		}
+	});
+}
+
+function {$config['select_name']}_setOption(data, subSelectDiv){
+	var buildingOption, nowSelected, selected;
+	if(subSelectDiv=="{$config['select_name']}_city"){
+		nowSelected = {$config['select_name']}_nowCity;
+	}else if(subSelectDiv=="{$config['select_name']}_district"){
+		nowSelected = {$config['select_name']}_nowDistrict;
+	}else{
+		nowSelected = 0;
+	}
+	$.each(data,function(n,val) {
+		if(nowSelected == val['id']){
+			selected = "selected";
+		}else{
+			selected = "";
+		}
+		buildingOption +='<option value="'+val['id']+'" '+selected+'>'+val['name']+'</option>';
+	});
+	$("."+subSelectDiv).html(buildingOption);
+	{$config['select_name']}_SetSubArea($("."+subSelectDiv));
+}
+</script>
+
+
+</body>
+</html>
